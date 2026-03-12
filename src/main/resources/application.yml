@@ -20,3 +20,7 @@ logging:
   level:
     root: INFO
     com.hansol.forum: DEBUG
+
+jwt:
+  secret: myForumSecretkeyThatIsAtLeast256BitsLongForHS256Algorithm2025
+  expiration: 86400000
