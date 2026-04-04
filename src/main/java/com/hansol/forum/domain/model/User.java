@@ -1,12 +1,10 @@
 package com.hansol.forum.domain.model;
 
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.relational.core.mapping.Column;
-import org.springframework.data.relational.core.mapping.Table;
 
 import java.time.LocalDateTime;
 
@@ -14,24 +12,26 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table("users")
+@Entity
+@Table(name = "users")
 public class User {
-
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column("username")
+    @Column(nullable = false, unique = true, length = 50)
     private String username;
 
-    @Column("email")
+    @Column(nullable = false, unique = true, length = 100)
     private String email;
 
-    @Column("password")
+    @Column(nullable = false)
     private String password;
 
-    @Column("role")
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private Role role;
 
-    @Column("created_at")
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
 }

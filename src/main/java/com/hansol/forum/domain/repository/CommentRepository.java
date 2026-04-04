@@ -1,11 +1,11 @@
 package com.hansol.forum.domain.repository;
 
 import com.hansol.forum.domain.model.Comment;
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 
-public interface CommentRepository extends CrudRepository<Comment, Long> {
+public interface CommentRepository extends JpaRepository<Comment, Long> {
     List<Comment> findByPostId(Long postId);
-    List<Comment> findByPostUserId(Long userId);
+    List<Comment> findByUserId(Long userId);
 }
