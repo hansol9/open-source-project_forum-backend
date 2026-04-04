@@ -35,7 +35,7 @@ public class AuthController {
                 )
         );
     }
-    /*
+
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
         User user = userService.findByUsername(request.getUsername())
@@ -50,7 +50,12 @@ public class AuthController {
                 user.getRole().name()
         );
 
-        return Response
+        return ResponseEntity.ok(
+                Map.of(
+                        "token", token,
+                        "username", user.getUsername(),
+                        "role", user.getRole().name()
+                )
+        );
     }
-    */
 }
