@@ -43,7 +43,7 @@ public class PostService {
 
     public List<Post> findByUserId(Long userId) {
         log.debug("Finding posts by user id: {}", userId);
-        return postRepository.findAllByUserId(userId);
+        return postRepository.findByUserId(userId);
     }
 
     public Post update(Long id, PostRequest request, Long userId) {
