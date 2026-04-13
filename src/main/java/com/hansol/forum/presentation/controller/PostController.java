@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,16 +18,19 @@ import java.util.List;
 @RequestMapping("/api/posts")
 @RequiredArgsConstructor
 public class PostController {
+
     private final PostService postService;
     private final UserService userService;
 
+    private String getCurrentUsername() {
+        return SecurityContextHolder.getContext().getAuthentication().getName();
+    }
+
     @PostMapping
-    public ResponseEntity<Post> create(@RequestBody PostRequest request,
-                                       @AuthenticationPrincipal String username) {
-        User user = userService.findByUsername(username)
+    public ResponseEntity<Post> create(@RequestBody PostRequest request) {
+        User user = userService.findByUsername(getCurrentUsername())
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
         Post post = postService.create(request, user.getId());
-
         return ResponseEntity.status(HttpStatus.CREATED).body(post);
     }
 
@@ -39,29 +43,23 @@ public class PostController {
     public ResponseEntity<Post> findById(@PathVariable Long id) {
         Post post = postService.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Post not found"));
-
         return ResponseEntity.ok(post);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Post> update(@PathVariable Long id,
-                                       @RequestBody PostRequest request,
-                                       @AuthenticationPrincipal String username) {
-        User user = userService.findByUsername(username)
+                                       @RequestBody PostRequest request) {
+        User user = userService.findByUsername(getCurrentUsername())
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
         Post post = postService.update(id, request, user.getId());
-
         return ResponseEntity.ok(post);
-
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id,
-                                       @AuthenticationPrincipal String username) {
-        User user = userService.findByUsername(username)
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        User user = userService.findByUsername(getCurrentUsername())
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
         postService.delete(id, user.getId());
-
         return ResponseEntity.noContent().build();
     }
 }

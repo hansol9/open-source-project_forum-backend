@@ -1,7 +1,8 @@
 package com.hansol.forum.presentation.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.hansol.forum.application.dto.PostRequest;
+import com.hansol.forum.application.dto.CommentRequest;
+import com.hansol.forum.domain.model.Comment;
 import com.hansol.forum.domain.model.Post;
 import com.hansol.forum.domain.model.Role;
 import com.hansol.forum.domain.model.User;
@@ -27,7 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-class PostControllerTest {
+public class CommentControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -42,10 +43,10 @@ class PostControllerTest {
     private PostRepository postRepository;
 
     @Autowired
-    private LikeRepository likeRepository;
+    private CommentRepository commentRepository;
 
     @Autowired
-    private CommentRepository commentRepository;
+    private LikeRepository likeRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -55,6 +56,8 @@ class PostControllerTest {
 
     private String token;
     private User testUser;
+    private Post testPost;
+
 
     @BeforeEach
     void setUp() {
@@ -71,6 +74,13 @@ class PostControllerTest {
         testUser.setCreatedAt(LocalDateTime.now());
         testUser = userRepository.saveAndFlush(testUser);
 
+        testPost = new Post();
+        testPost.setTitle("Test Post");
+        testPost.setContent("Content");
+        testPost.setUserId(testUser.getId());
+        testPost.setCreatedAt(LocalDateTime.now());
+        testPost = postRepository.saveAndFlush(testPost);
+
         token = jwtTokenProvider.generateToken("testuser", "USER");
     }
 
@@ -83,100 +93,64 @@ class PostControllerTest {
     }
 
     @Test
-    void createPost_Success() throws Exception {
-        PostRequest request = new PostRequest();
-        request.setTitle("Test Post");
-        request.setContent("Test Content");
+    void createComment_Success() throws Exception {
+        CommentRequest request = new CommentRequest();
+        request.setContent("Test Comment");
 
-        mockMvc.perform(post("/api/posts")
+        mockMvc.perform(post("/api/posts/" + testPost.getId() + "/comments")
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.title").value("Test Post"));
+                .andExpect(jsonPath("$.content").value("Test Comment"));
     }
 
     @Test
-    void getAllPosts_Success() throws Exception {
-        Post p = new Post();
-        p.setTitle("Existing Post");
-        p.setContent("Content");
-        p.setUserId(testUser.getId());
-        p.setCreatedAt(LocalDateTime.now());
-        postRepository.saveAndFlush(p);
+    void getCommentsByPostId_Success() throws Exception {
+        Comment comment = new Comment();
+        comment.setContent("Existing Comment");
+        comment.setUserId(testUser.getId());
+        comment.setPostId(testPost.getId());
+        comment.setCreatedAt(LocalDateTime.now());
+        commentRepository.saveAndFlush(comment);
 
-        mockMvc.perform(get("/api/posts")
+        mockMvc.perform(get("/api/posts/" + testPost.getId() + "/comments")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].title").value("Existing Post"));
+                .andExpect(jsonPath("$[0].content").value("Existing Comment"));
     }
 
     @Test
-    void getPostById_Success() throws Exception {
-        Post p = new Post();
-        p.setTitle("Find Me");
-        p.setContent("Content");
-        p.setUserId(testUser.getId());
-        p.setCreatedAt(LocalDateTime.now());
-        p = postRepository.saveAndFlush(p);
+    void updateComment_Success() throws Exception {
+        Comment comment = new Comment();
+        comment.setContent("Old Comment");
+        comment.setUserId(testUser.getId());
+        comment.setPostId(testPost.getId());
+        comment.setCreatedAt(LocalDateTime.now());
+        comment = commentRepository.saveAndFlush(comment);
 
-        mockMvc.perform(get("/api/posts/" + p.getId())
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.title").value("Find Me"));
-    }
+        CommentRequest request = new CommentRequest();
+        request.setContent("Updated Comment");
 
-    @Test
-    void getPostById_NotFound() throws Exception {
-        mockMvc.perform(get("/api/posts/999")
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    void updatePost_Success() throws Exception {
-        Post p = new Post();
-        p.setTitle("Old Title");
-        p.setContent("Old Content");
-        p.setUserId(testUser.getId());
-        p.setCreatedAt(LocalDateTime.now());
-        p = postRepository.saveAndFlush(p);
-
-        PostRequest request = new PostRequest();
-        request.setTitle("New Title");
-        request.setContent("New Content");
-
-        mockMvc.perform(put("/api/posts/" + p.getId())
+        mockMvc.perform(put("/api/posts/" + testPost.getId() + "/comments/" + comment.getId())
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.title").value("New Title"));
+                .andExpect(jsonPath("$.content").value("Updated Comment"));
     }
 
     @Test
-    void deletePost_Success() throws Exception {
-        Post p = new Post();
-        p.setTitle("Delete Me");
-        p.setContent("Content");
-        p.setUserId(testUser.getId());
-        p.setCreatedAt(LocalDateTime.now());
-        p = postRepository.saveAndFlush(p);
+    void deleteComment_Success() throws Exception {
+        Comment comment = new Comment();
+        comment.setContent("Delete Me");
+        comment.setUserId(testUser.getId());
+        comment.setPostId(testPost.getId());
+        comment.setCreatedAt(LocalDateTime.now());
+        comment = commentRepository.saveAndFlush(comment);
 
-        mockMvc.perform(delete("/api/posts/" + p.getId())
+        mockMvc.perform(delete("/api/posts/" + testPost.getId() + "/comments/" + comment.getId())
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isNoContent());
-    }
-
-    @Test
-    void createPost_Unauthorized() throws Exception {
-        PostRequest request = new PostRequest();
-        request.setTitle("Test");
-        request.setContent("Content");
-
-        mockMvc.perform(post("/api/posts")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isForbidden());
     }
 }
